@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>KSign — OTA Installer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -442,6 +443,71 @@
       line-height: 1.5;
     }
 
+    /* ── DNS banner ── */
+    .dns-banner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: linear-gradient(135deg, rgba(0,229,192,0.07), rgba(108,99,255,0.07));
+      border: 1px solid rgba(0, 229, 192, 0.25);
+      border-radius: var(--r);
+      padding: 1rem 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .dns-banner-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      width: 44px; height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 229, 192, 0.1);
+      border: 1px solid rgba(0, 229, 192, 0.2);
+      border-radius: 10px;
+    }
+
+    .dns-banner-text {
+      flex: 1;
+    }
+
+    .dns-banner-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .dns-banner-sub {
+      font-size: 0.75rem;
+      color: var(--muted2);
+      line-height: 1.4;
+    }
+
+    .dns-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.65rem 1.1rem;
+      background: rgba(0, 229, 192, 0.12);
+      color: var(--accent3);
+      border: 1px solid rgba(0, 229, 192, 0.35);
+      border-radius: 9px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.18s, box-shadow 0.18s;
+      flex-shrink: 0;
+    }
+
+    .dns-btn:hover {
+      background: rgba(0, 229, 192, 0.2);
+      box-shadow: 0 0 16px rgba(0, 229, 192, 0.2);
+    }
+
     /* ── Footer ── */
     footer {
       margin-top: 3rem;
@@ -455,11 +521,29 @@
     footer a { color: var(--accent2); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
-    /* ── Responsive ── */
+    /* ── Responsive / iPhone ── */
     @media (max-width: 480px) {
-      .cert-grid { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 1.8rem; }
-      .stats-bar { gap: 0.4rem; }
+      .page { padding: 0 1rem env(safe-area-inset-bottom, 2rem); }
+      .cert-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+      .hero { padding: 2.5rem 0 2rem; }
+      .hero h1 { font-size: 1.75rem; }
+      .hero-sub { font-size: 0.9rem; }
+      .stats-bar { gap: 0.4rem; margin: 1.25rem 0 2rem; }
+      .stat-pill { font-size: 0.68rem; padding: 0.4rem 0.75rem; }
+      .cert-card { padding: 1.1rem; }
+      .cert-name { font-size: 0.88rem; }
+      .install-btn {
+        padding: 0.85rem 0.9rem;
+        font-size: 0.9rem;
+        min-height: 48px;
+      }
+      .direct-btn {
+        padding: 0.85rem 0.85rem;
+        min-height: 48px;
+      }
+      .dns-banner { flex-direction: column; gap: 0.75rem; text-align: center; }
+      .dns-btn { width: 100%; justify-content: center; min-height: 48px; }
+      .logo { width: 68px; height: 68px; font-size: 2rem; }
     }
   </style>
 </head>
@@ -485,8 +569,27 @@
       </div>
       <div class="stat-pill">
         <span class="dot"></span>
-        Built <strong>2026-05-12 18:44 UTC</strong>
+        Built <strong>2026-05-12 19:16 UTC</strong>
       </div>
+    </div>
+
+    <!-- DNS Profile Banner -->
+    <div class="dns-banner">
+      <div class="dns-banner-icon">🌐</div>
+      <div class="dns-banner-text">
+        <div class="dns-banner-title">Install DNS Profile</div>
+        <div class="dns-banner-sub">Recommended for stability — install khoindvn DNS before signing.</div>
+      </div>
+      <a href="https://github.com/dns-khoindvn/top-country-stats/releases/download/DNS/khoindvn.io.vn.mobileconfig"
+         class="dns-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        Install DNS
+      </a>
     </div>
 
     <!-- Cert grid -->
@@ -514,12 +617,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">5bd1fec8f4fe85d1…</span>
+              <span class="detail-val mono">f3bffbc87c1d10ba…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-XL_AXIATA__PT_TBK.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-XL_AXIATA__PT_TBK.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -540,7 +643,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">5bd1fec8f4fe85d1de12cb71b44097588317ff5f2e537ce380fd021e040710dd</div>
+            <div class="sha-box">f3bffbc87c1d10ba593d3feb4991ec2827edffe5f7c398529a4291b62bf472af</div>
           </details>
         </div>
 
@@ -561,12 +664,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">7be41a268815d28b…</span>
+              <span class="detail-val mono">38ca146eec9bce04…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wuling_Power_Corporation.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Wuling_Power_Corporation.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -587,7 +690,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">7be41a268815d28be5e40c26ab7b1bf174173eb813eb1f3f691e5839aa81764f</div>
+            <div class="sha-box">38ca146eec9bce0415f471ef2f56721bfd14816d475feed50b816f8a337cdc22</div>
           </details>
         </div>
 
@@ -608,12 +711,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">cf60660ca977fb75…</span>
+              <span class="detail-val mono">6b927bdcd6b13efc…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wasu_Media___Networking_Co___Ltd__jicengzhili_create20250114_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Wasu_Media___Networking_Co___Ltd__jicengzhili_create20250114_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -634,7 +737,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">cf60660ca977fb7552a65ea4af5e73ca85466f9f914a9c56f3489216bfc460fd</div>
+            <div class="sha-box">6b927bdcd6b13efc46a0ebfe8fe73727e468cb9671aa1a293c10f75e78c4c293</div>
           </details>
         </div>
 
@@ -655,12 +758,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">f59cb4b24556bb92…</span>
+              <span class="detail-val mono">e39f6e5d4c460f07…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wasu_Media___Networking_Co___Ltd__com_wasu_demo_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Wasu_Media___Networking_Co___Ltd__com_wasu_demo_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -681,7 +784,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">f59cb4b24556bb925f85baf5c0725034b0ad4064826e29377379e805da6cfc5d</div>
+            <div class="sha-box">e39f6e5d4c460f079c4bfac3b77dc31247f0ff78834fdb292df5bf2bc52efb1a</div>
           </details>
         </div>
 
@@ -702,12 +805,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">d9cbf654ec385496…</span>
+              <span class="detail-val mono">af368bce67257c5f…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-VIETNAM_JOINT_STOCK_COMMERCIAL_BANK_FOR_INDUSTRY_AND_TRADE.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-VIETNAM_JOINT_STOCK_COMMERCIAL_BANK_FOR_INDUSTRY_AND_TRADE.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -728,7 +831,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">d9cbf654ec385496574fafb5609533ad14a2bc4e89dda15e33c58f8251201589</div>
+            <div class="sha-box">af368bce67257c5f73d0ea060467d015955499b612049a2b09a61b30c8793adf</div>
           </details>
         </div>
 
@@ -749,12 +852,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">14e886cc97d52b87…</span>
+              <span class="detail-val mono">bcd6fbc25cc95cca…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-VIETNAM_AIRLINES_JSC.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-VIETNAM_AIRLINES_JSC.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -775,7 +878,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">14e886cc97d52b87fc0b77fa24c68cb2d0341274c0712edd0a6643f381f8c1e8</div>
+            <div class="sha-box">bcd6fbc25cc95cca9e5fb6846d12ac4a7b82ae7beddcfdc38b27912083f3c60a</div>
           </details>
         </div>
 
@@ -796,12 +899,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">bcee169bd4625b46…</span>
+              <span class="detail-val mono">4c42a1d1f177de6b…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Tianjin_University_of_Commerce.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Tianjin_University_of_Commerce.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -822,7 +925,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">bcee169bd4625b46c8af11b7d4df2a9d8353f0f6a6b9ed1de11905752ac6f490</div>
+            <div class="sha-box">4c42a1d1f177de6b18ef2a016f96b06bef2910c372606d3bebb7c9d1e0e1363e</div>
           </details>
         </div>
 
@@ -843,12 +946,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">776cf437a97fade1…</span>
+              <span class="detail-val mono">67bd798bc9e64dc8…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Qingdao_Rural_Commercial_Bank_Co___Ltd.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Qingdao_Rural_Commercial_Bank_Co___Ltd.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -869,7 +972,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">776cf437a97fade144463faf497dc8ea91df518a50d12ac4b2b66943929af13e</div>
+            <div class="sha-box">67bd798bc9e64dc8acfa7d41146052d22144a4199201e54229d17ee6043321f9</div>
           </details>
         </div>
 
@@ -890,12 +993,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">9fcb27434d9f2981…</span>
+              <span class="detail-val mono">0499b35a6ee5a4d3…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__nj61nO_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-PowerChina_International_Group_Limited__nj61nO_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -916,7 +1019,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">9fcb27434d9f2981217ee21d85f71e00adc79782b4c597de9dbd2aff131e2719</div>
+            <div class="sha-box">0499b35a6ee5a4d3a2a4661dd01b9e404c313a954321d307282bfd16500ec4ce</div>
           </details>
         </div>
 
@@ -937,12 +1040,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">339513a91623bdb6…</span>
+              <span class="detail-val mono">4399172638f730f9…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__j3krPY_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-PowerChina_International_Group_Limited__j3krPY_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -963,7 +1066,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">339513a91623bdb62521d929b747f1ad8352cf79b57abd0a015e6a964c3d69a4</div>
+            <div class="sha-box">4399172638f730f9ccdc86fca24718404ed110517af8729c71c4b39d89b8e88c</div>
           </details>
         </div>
 
@@ -984,12 +1087,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">229c91e8873a3982…</span>
+              <span class="detail-val mono">8821b4437e80e3d6…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__iWaMrs_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-PowerChina_International_Group_Limited__iWaMrs_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1010,7 +1113,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">229c91e8873a398274747daa69e6437ff8dfc16ca8a9d96c36d1b54be179c7f3</div>
+            <div class="sha-box">8821b4437e80e3d6a5c2a7ff4dfaa6b8cde62532e29f80fbc9b66b72c5e0efbb</div>
           </details>
         </div>
 
@@ -1031,12 +1134,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">97953d1179558d92…</span>
+              <span class="detail-val mono">dc3ef87a54577fbb…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__HRU79V_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-PowerChina_International_Group_Limited__HRU79V_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1057,7 +1160,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">97953d1179558d92613f55cf009327913ca230c7547f66b830efc125839aa5b2</div>
+            <div class="sha-box">dc3ef87a54577fbb6700d9335bb723325b529c293324f4ee112906be4fe5d074</div>
           </details>
         </div>
 
@@ -1078,12 +1181,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">8e1a78ba4905fbd4…</span>
+              <span class="detail-val mono">0e5bf516c4c8b1b8…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__DoaTYw_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-PowerChina_International_Group_Limited__DoaTYw_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1104,7 +1207,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">8e1a78ba4905fbd41f3da62c1d290f7de79dd5c5e3c249bb0ab51a884c18b43b</div>
+            <div class="sha-box">0e5bf516c4c8b1b832b8165856b224828134fec54607ac01c803344a8b5ad11d</div>
           </details>
         </div>
 
@@ -1125,12 +1228,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">d111ee51c4955e22…</span>
+              <span class="detail-val mono">d9f31b99b69222a2…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-National_Oilwell_Varco__Inc.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-National_Oilwell_Varco__Inc.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1151,7 +1254,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">d111ee51c4955e22d46ffc7da638adf06e0d14a1a57ffa25f1afa2ea67858af8</div>
+            <div class="sha-box">d9f31b99b69222a2c14aacb2d66a3dcfc5a235d437ffbf93c7596f30fa007e7c</div>
           </details>
         </div>
 
@@ -1172,12 +1275,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">59fefc03d734e8f9…</span>
+              <span class="detail-val mono">2629428c863e4f9c…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Luoyang_Postal_Administration.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Luoyang_Postal_Administration.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1198,7 +1301,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">59fefc03d734e8f99877d21bf1e3428988ea9dd9d11b43ca2cfa8af7af8bb443</div>
+            <div class="sha-box">2629428c863e4f9caadbeeec71cb17fad2149547e431b30e419173089de9864d</div>
           </details>
         </div>
 
@@ -1219,12 +1322,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">e1452e1263468193…</span>
+              <span class="detail-val mono">95f935c3065be82a…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Guangzhou_Huahan_Educational___Technology_Co___Ltd_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Guangzhou_Huahan_Educational___Technology_Co___Ltd_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1245,7 +1348,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">e1452e1263468193f5d31101b9d8ca94dd6d3d63a2b7409310d823e270b857e9</div>
+            <div class="sha-box">95f935c3065be82ad99227b4c57b85dbc3adc5259d72e232950a51cdb9018d38</div>
           </details>
         </div>
 
@@ -1266,12 +1369,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">d68447f08cdb204b…</span>
+              <span class="detail-val mono">db74faa2855ae624…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__suppose_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__suppose_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1292,7 +1395,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">d68447f08cdb204b2dacc61fa89ff847945bd731fe86a81dd4e708980e90459b</div>
+            <div class="sha-box">db74faa2855ae6248f838bff314182b32368825b0ee1eceba447fcb50fedfa34</div>
           </details>
         </div>
 
@@ -1313,12 +1416,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">452c5d7013896274…</span>
+              <span class="detail-val mono">5ada600a2244be22…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__branch_distribution_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__branch_distribution_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1339,7 +1442,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">452c5d7013896274478eb6bc473d1b33f0ad1bdc77b3c4f6a2bd36c06a85d2cf</div>
+            <div class="sha-box">5ada600a2244be22f26963fa7655f0d30a76797d79e4d44ce2923104504b4ae4</div>
           </details>
         </div>
 
@@ -1360,12 +1463,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">c88dcf69de308b21…</span>
+              <span class="detail-val mono">2e2666c058ea0524…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__ads_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__ads_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1386,7 +1489,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">c88dcf69de308b21a7f82a14e9c87fff7cf30035c312158f4d8b70f11e34cb58</div>
+            <div class="sha-box">2e2666c058ea0524d97f27294a341fcd5b17f41150671f6e81e51327c6a50dbd</div>
           </details>
         </div>
 
@@ -1407,12 +1510,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">646d9169ee5be70b…</span>
+              <span class="detail-val mono">1d9f7910227f9d61…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Scope_ent_distribution_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__Scope_ent_distribution_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1433,7 +1536,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">646d9169ee5be70b1cd1db381102c0db6ad8dda959a863dcad4c0c79db1f463d</div>
+            <div class="sha-box">1d9f7910227f9d6147557088c504707ff0ba044f7b954523238412ed1ebbfb47</div>
           </details>
         </div>
 
@@ -1454,12 +1557,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">acd5fc86613c609c…</span>
+              <span class="detail-val mono">7c10f417cab0de26…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__HLS_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__HLS_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1480,7 +1583,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">acd5fc86613c609c1f4342b617fa133bcdacc37a65c8562f277805a83f564518</div>
+            <div class="sha-box">7c10f417cab0de2646acb635798e6ec61a021c4c04f1b405d219fd557f90496b</div>
           </details>
         </div>
 
@@ -1501,12 +1604,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">5c6f4f52818e6045…</span>
+              <span class="detail-val mono">a5236964316c903b…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Fairplay_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__Fairplay_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1527,7 +1630,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">5c6f4f52818e6045a784dc16ccaf9edf05827c64401b6fd8b2da4d148486a418</div>
+            <div class="sha-box">a5236964316c903b424733ac6fb6ceb0d96659096812233232d2546bf1a35225</div>
           </details>
         </div>
 
@@ -1548,12 +1651,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">ecea1acee0238dc7…</span>
+              <span class="detail-val mono">001db7fc31e53946…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Deeplink_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__Deeplink_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1574,7 +1677,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">ecea1acee0238dc7fdf060963e80edca7ef92f4dff1b15a4b0b799e0c37effa4</div>
+            <div class="sha-box">001db7fc31e53946356f3a76f86d0e863c9af004d2667b1724647dd1c8ef6982</div>
           </details>
         </div>
 
@@ -1595,12 +1698,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">33a8b099cf98f26c…</span>
+              <span class="detail-val mono">65e7c746d4286669…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Airtel_Adhoc_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Global_Takeoff__Inc__Airtel_Adhoc_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1621,7 +1724,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">33a8b099cf98f26cfd651a8be43910546872879c290dd22238c781d1698fccf6</div>
+            <div class="sha-box">65e7c746d4286669d841f43dbc5f8756fd5dc126ea48a8d60fc67794913ae178</div>
           </details>
         </div>
 
@@ -1642,12 +1745,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">8b9e87614a82567a…</span>
+              <span class="detail-val mono">824e2ab49206ccf5…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Forevermark_Marketing_Shanghai___Limited.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Forevermark_Marketing_Shanghai___Limited.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1668,7 +1771,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">8b9e87614a82567aadde1b589107592897f15bbe9899d202f9a807835ccbe35f</div>
+            <div class="sha-box">824e2ab49206ccf5c502a53cba839bf7d8f9da8c6ce67000273f2bcd331de7ca</div>
           </details>
         </div>
 
@@ -1689,12 +1792,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">19b9a081dffa2ae2…</span>
+              <span class="detail-val mono">bf0aad73874f0072…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Etisalat_-_Emirates_Telecommunications_Corporation.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Etisalat_-_Emirates_Telecommunications_Corporation.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1715,7 +1818,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">19b9a081dffa2ae22d8b7823d1e78da6a171d82d288361c6adad37095a26a419</div>
+            <div class="sha-box">bf0aad73874f00725a4dc331ea93bcfaa0d0161094509d4aed4fa426190d3685</div>
           </details>
         </div>
 
@@ -1736,12 +1839,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">633b3b1e61ed75db…</span>
+              <span class="detail-val mono">762da74fd8fa54bd…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__oadav_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__oadav_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1762,7 +1865,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">633b3b1e61ed75db81b57655674c5583fdeadbda04a288d7440a42f6a5791fa1</div>
+            <div class="sha-box">762da74fd8fa54bdbae050f29e275f195e2468c8d9ba0abbf126a3e92a5c3938</div>
           </details>
         </div>
 
@@ -1783,12 +1886,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">4126d90bab75b835…</span>
+              <span class="detail-val mono">9e6556f3ce824a30…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__United_politics_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__United_politics_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1809,7 +1912,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">4126d90bab75b835ccbc0f2f32bdc5f447b1450376dcc11a1514d31fa52cc1f9</div>
+            <div class="sha-box">9e6556f3ce824a302947a912b8f121c2e5a9b0a522adaf19a8d83f42d3d9a5ad</div>
           </details>
         </div>
 
@@ -1830,12 +1933,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">fe48de48e94d29d7…</span>
+              <span class="detail-val mono">145b78248ed51eca…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Report_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__Report_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1856,7 +1959,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">fe48de48e94d29d7eafe0403bae1bbd34194268390cbe01b7616edcc08b381bf</div>
+            <div class="sha-box">145b78248ed51ecaeba0f4ed7b8e2eafe375bb4a39470fc9905989e43dc1582f</div>
           </details>
         </div>
 
@@ -1877,12 +1980,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">5913ba23aca28101…</span>
+              <span class="detail-val mono">bea07551a1f8ac1a…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__EMS_Manage_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__EMS_Manage_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1903,7 +2006,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">5913ba23aca281013c42dbf310cf9d573e53cf4a8b9a0a2c974e67f486f4eb14</div>
+            <div class="sha-box">bea07551a1f8ac1aa54464423737a381f1b6f905a8aaf7c6e169867e66248c49</div>
           </details>
         </div>
 
@@ -1924,12 +2027,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">d9e3ed2a38ede7de…</span>
+              <span class="detail-val mono">b52529ad10bf0609…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Complaints_Management_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__Complaints_Management_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1950,7 +2053,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">d9e3ed2a38ede7de30a293f5e0122c5454cfad6470040243862621f15920e135</div>
+            <div class="sha-box">b52529ad10bf0609dd0e40d54506c17aaed6096ecaaba04f17329c5504549c70</div>
           </details>
         </div>
 
@@ -1971,12 +2074,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">bd8fca5976ff21dc…</span>
+              <span class="detail-val mono">e838a791c2bc00d3…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Committee_Supervision_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Commission_on_Elections__Committee_Supervision_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -1997,7 +2100,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">bd8fca5976ff21dc4565795857a5f58a2db4e25d985dc7043049a38959d2df92</div>
+            <div class="sha-box">e838a791c2bc00d360ab012f56acded51213ceb4b91bf079d703d8ee31ec72f4</div>
           </details>
         </div>
 
@@ -2018,12 +2121,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">07f11424cf2ad31d…</span>
+              <span class="detail-val mono">6f2af9acef8da54d…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_Telecommunications_Corporation.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-China_Telecommunications_Corporation.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -2044,7 +2147,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">07f11424cf2ad31d46997b854ff4881b056657b2b3ed7a4d3ea3d90c8b59d3f5</div>
+            <div class="sha-box">6f2af9acef8da54d648e1f9e7b7f81d65c73b1fc826851f38fe0668671bf8a56</div>
           </details>
         </div>
 
@@ -2065,12 +2168,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">0049f3c09b4772e1…</span>
+              <span class="detail-val mono">38745ca8927322b1…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_National_Heavy_Duty_Truck_Group_Co___Ltd_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-China_National_Heavy_Duty_Truck_Group_Co___Ltd_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -2091,7 +2194,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">0049f3c09b4772e164c86bf8353d055acfd03086391f057d92f965822b8bc1a0</div>
+            <div class="sha-box">38745ca8927322b18d22a644e58b3bfbdb5120bb7eea521abaf24ad20ed01f6f</div>
           </details>
         </div>
 
@@ -2112,12 +2215,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">f1169233feed79de…</span>
+              <span class="detail-val mono">4216b11d94acbc79…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_Academy_of_Railway_Sciences.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-China_Academy_of_Railway_Sciences.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -2138,7 +2241,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">f1169233feed79def13e885b70de21118cd5f780dbc7d7a4939a886f349c3c39</div>
+            <div class="sha-box">4216b11d94acbc79e9f09f12e6f487bc5e854326affbb440c9404b2183446b7f</div>
           </details>
         </div>
 
@@ -2159,12 +2262,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">a15bc36dcfd12a01…</span>
+              <span class="detail-val mono">b840ae286599ae93…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Beijing_Zhizhangyi_Inc_.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Beijing_Zhizhangyi_Inc_.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -2185,7 +2288,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">a15bc36dcfd12a01c57b4ff2879eac503300c7f924f8abb2da2fa29a8bb8ae7d</div>
+            <div class="sha-box">b840ae286599ae936a31742a5ba9736926213de0e0697c31db739cdc3a277adb</div>
           </details>
         </div>
 
@@ -2206,12 +2309,12 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">SHA-256</span>
-              <span class="detail-val mono">84ddf631ee2b9b8f…</span>
+              <span class="detail-val mono">fd0c96f45de10150…</span>
             </div>
           </div>
 
           <div class="cert-actions">
-            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Aramco_Services_Company.plist" class="install-btn">
+            <a href="itms-services://?action=download-manifest&url=https%3A%2F%2Fnikos-projects.github.io%2Fksign-hub%2Fmanifest-Aramco_Services_Company.plist" class="install-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2"
                    stroke-linecap="round" stroke-linejoin="round">
@@ -2232,7 +2335,7 @@
 
           <details class="sha-details">
             <summary>Full SHA-256</summary>
-            <div class="sha-box">84ddf631ee2b9b8fc1afce938eac5a45b912c3edd807191028e46c3c457ac2b8</div>
+            <div class="sha-box">fd0c96f45de1015063f512b34a40abac876eb0cee30eea70d828a6a3c5568568</div>
           </details>
         </div>
     </div>
@@ -2257,7 +2360,7 @@
 
     <footer>
       Auto-built by <a href="https://github.com/nikos-projects/ksign-hub">GitHub Actions</a> ·
-      2026-05-12 18:44 UTC<br>
+      2026-05-12 19:16 UTC<br>
       KSign by <a href="https://github.com/nyasami/ksign">nyasami</a>
     </footer>
   </div>
