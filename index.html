@@ -4,340 +4,2260 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>KSign OTA Installer</title>
+  <title>KSign — OTA Installer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #0a0a0f;
-      --surface:   #111118;
-      --border:    #1e1e2e;
-      --accent:    #7c6aff;
-      --accent2:   #c084fc;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --green:     #22d3a5;
-      --red:       #f87171;
-      --glow:      rgba(124, 106, 255, 0.18);
+      --bg:        #07070d;
+      --surface:   #0e0e18;
+      --surface2:  #13131f;
+      --border:    #1a1a2e;
+      --border2:   #252540;
+      --accent:    #6c63ff;
+      --accent2:   #b06fff;
+      --accent3:   #00e5c0;
+      --text:      #dde3f0;
+      --muted:     #5a6180;
+      --muted2:    #7a85a8;
+      --green:     #00e5c0;
+      --glow:      rgba(108, 99, 255, 0.22);
+      --glow2:     rgba(0, 229, 192, 0.15);
+      --r:         14px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html { scroll-behavior: smooth; }
+
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Syne', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem 4rem;
       overflow-x: hidden;
     }
 
-    /* Grid background */
+    /* ── Noise texture overlay ── */
     body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── Grid ── */
+    body::after {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
         linear-gradient(var(--border) 1px, transparent 1px),
         linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.35;
+      background-size: 48px 48px;
+      opacity: 0.25;
       pointer-events: none;
       z-index: 0;
     }
 
-    .container {
-      width: 100%;
-      max-width: 520px;
+    /* ── Glow orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12), transparent 70%);
+      top: -150px; left: -150px;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,229,192,0.07), transparent 70%);
+      bottom: 10%; right: -100px;
+    }
+
+    /* ── Layout ── */
+    .page {
       position: relative;
       z-index: 1;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 1.25rem 5rem;
     }
 
-    /* ── Header ── */
-    header {
+    /* ── Hero ── */
+    .hero {
+      padding: 4rem 0 3rem;
       text-align: center;
-      padding: 3rem 0 2.5rem;
     }
 
-    .logo-wrap {
+    .logo {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 80px; height: 80px;
+      width: 84px; height: 84px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 22px;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 40px var(--glow);
-      font-size: 2.4rem;
+      border-radius: 24px;
+      font-size: 2.5rem;
+      margin-bottom: 1.6rem;
+      box-shadow: 0 0 50px var(--glow), 0 0 100px rgba(108,99,255,0.08);
+      animation: logoFloat 4s ease-in-out infinite;
     }
 
-    h1 {
-      font-family: 'Space Mono', monospace;
-      font-size: 1.7rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-6px); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 20%, var(--accent2) 65%, var(--accent3));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 0.6rem;
     }
 
-    .subtitle {
-      margin-top: 0.5rem;
-      color: var(--muted);
-      font-size: 0.9rem;
+    .hero-sub {
+      color: var(--muted2);
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
 
-    /* ── Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.75rem;
-      margin-bottom: 1rem;
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 2rem 0 3rem;
     }
 
-    .card-title {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      margin-bottom: 1.1rem;
-    }
-
-    /* ── Meta rows ── */
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.7rem;
-    }
-
-    .meta-item {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.8rem 1rem;
-    }
-
-    .meta-label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .meta-value {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
-      color: var(--text);
-      margin-top: 0.25rem;
-      word-break: break-all;
-    }
-
-    .badge {
+    .stat-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      font-size: 0.72rem;
-      font-family: 'Space Mono', monospace;
-      padding: 0.2rem 0.6rem;
+      gap: 0.45rem;
+      padding: 0.45rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border2);
       border-radius: 99px;
-      background: rgba(34, 211, 165, 0.1);
-      color: var(--green);
-      border: 1px solid rgba(34, 211, 165, 0.25);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted2);
     }
 
-    .badge::before { content: '●'; font-size: 0.55rem; }
+    .stat-pill .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent3);
+      box-shadow: 0 0 6px var(--accent3);
+    }
 
-    /* ── Install button ── */
-    .install-btn {
+    .stat-pill strong { color: var(--text); }
+
+    /* ── Section heading ── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border2);
+    }
+
+    /* ── Cert grid ── */
+    .cert-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ── Cert card ── */
+    .cert-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: cardIn 0.4s ease forwards;
+      animation-delay: calc(var(--card-index) * 0.07s);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cert-card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 0 30px rgba(108,99,255,0.08);
+    }
+
+    .cert-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .cert-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      width: 42px; height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 12px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      box-shadow: 0 0 30px rgba(124, 106, 255, 0.35);
-      margin-bottom: 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
     }
 
-    .install-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .install-btn:active { transform: translateY(0); opacity: 0.8; }
+    .cert-meta { flex: 1; min-width: 0; }
 
-    .install-btn svg { flex-shrink: 0; }
+    .cert-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cert-folder-raw {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.65rem;
+      font-family: 'Space Mono', monospace;
+      padding: 0.2rem 0.55rem;
+      border-radius: 99px;
+      background: rgba(0, 229, 192, 0.08);
+      color: var(--green);
+      border: 1px solid rgba(0, 229, 192, 0.2);
+    }
+    .badge::before { content: '●'; font-size: 0.5rem; }
+
+    /* ── Details row ── */
+    .cert-details {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .detail-item {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.75rem;
+    }
+
+    .detail-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .detail-val {
+      font-size: 0.82rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .detail-val.mono {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 400;
+    }
+
+    /* ── Actions ── */
+    .cert-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: stretch;
+    }
+
+    .install-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.7rem 0.9rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border-radius: 9px;
+      text-decoration: none;
+      transition: opacity 0.18s, transform 0.15s;
+      box-shadow: 0 0 24px rgba(108,99,255,0.3);
+    }
+
+    .install-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+    .install-btn:active { transform: translateY(0); opacity: 0.75; }
 
     .direct-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      width: 100%;
-      padding: 0.75rem;
-      background: transparent;
-      color: var(--muted);
-      font-size: 0.85rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      gap: 0.35rem;
+      padding: 0.7rem 0.85rem;
+      background: var(--surface2);
+      color: var(--muted2);
+      font-size: 0.8rem;
+      font-family: 'Space Mono', monospace;
+      border: 1px solid var(--border2);
+      border-radius: 9px;
       text-decoration: none;
-      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+      transition: color 0.18s, border-color 0.18s;
     }
 
     .direct-btn:hover { color: var(--text); border-color: var(--accent); }
 
-    /* ── Steps ── */
-    .steps { list-style: none; }
-    .steps li {
-      display: flex;
-      gap: 0.9rem;
-      align-items: flex-start;
-      padding: 0.65rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.88rem;
-      color: var(--muted);
-    }
-    .steps li:last-child { border-bottom: none; }
-    .step-num {
-      flex-shrink: 0;
-      width: 22px; height: 22px;
-      background: var(--border);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--accent2);
-      margin-top: 1px;
+    /* ── SHA details ── */
+    .sha-details {
+      font-size: 0.72rem;
     }
 
-    /* ── SHA ── */
-    .sha-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.6rem 0.8rem;
+    .sha-details summary {
+      cursor: pointer;
+      color: var(--muted);
       font-family: 'Space Mono', monospace;
       font-size: 0.65rem;
+      user-select: none;
+      outline: none;
+      list-style: none;
+    }
+    .sha-details summary::-webkit-details-marker { display: none; }
+    .sha-details summary::before { content: '▸ '; }
+    .sha-details[open] summary::before { content: '▾ '; }
+
+    .sha-box {
+      margin-top: 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.7rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
       color: var(--muted);
       word-break: break-all;
       line-height: 1.6;
     }
 
-    /* ── Warning ── */
+    /* ── Info / how-to ── */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .info-card .card-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .steps { list-style: none; }
+    .steps li {
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.86rem;
+      color: var(--muted2);
+      line-height: 1.5;
+    }
+    .steps li:last-child { border-bottom: none; }
+    .step-num {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      background: var(--border2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent2);
+      margin-top: 2px;
+    }
+
     .warning {
-      background: rgba(248, 113, 113, 0.06);
-      border: 1px solid rgba(248, 113, 113, 0.2);
-      border-radius: 10px;
-      padding: 0.9rem 1rem;
+      background: rgba(255, 180, 0, 0.05);
+      border: 1px solid rgba(255, 180, 0, 0.18);
+      border-radius: 9px;
+      padding: 0.85rem 1rem;
       font-size: 0.82rem;
-      color: var(--red);
-      margin-top: 0.75rem;
+      color: #fbbf24;
+      margin-top: 1rem;
       line-height: 1.5;
     }
 
     /* ── Footer ── */
     footer {
-      margin-top: 2.5rem;
+      margin-top: 3rem;
       text-align: center;
-      font-size: 0.75rem;
-      color: var(--muted);
       font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 2;
     }
 
-    footer a { color: var(--accent); text-decoration: none; }
+    footer a { color: var(--accent2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
 
-    @media (max-width: 400px) {
-      .meta-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 1.4rem; }
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .cert-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.8rem; }
+      .stats-bar { gap: 0.4rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo-wrap">✍️</div>
-      <h1>KSign</h1>
-      <p class="subtitle">OTA Certificate-Bundled Installer</p>
-    </header>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-    <!-- Status card -->
-    <div class="card">
-      <p class="card-title">Build Info</p>
-      <div class="meta-grid">
-        <div class="meta-item">
-          <div class="meta-label">Version</div>
-          <div class="meta-value">v1.5.1</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Status</div>
-          <div class="meta-value"><span class="badge">Signed</span></div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Size</div>
-          <div class="meta-value">13.5 MB</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Updated</div>
-          <div class="meta-value">2026-05-12 17:49</div>
-        </div>
+  <div class="page">
+    <div class="hero">
+      <div class="logo">✍️</div>
+      <h1>KSign OTA Installer</h1>
+      <p class="hero-sub">Certificate-bundled builds · Install directly on iOS</p>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-pill">
+        <span class="dot"></span>
+        <strong>37</strong> certificates available
+      </div>
+      <div class="stat-pill">
+        <span class="dot"></span>
+        Version <strong>v1.5.1</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="dot"></span>
+        Built <strong>2026-05-12 18:29 UTC</strong>
       </div>
     </div>
 
-    <!-- Install card -->
-    <div class="card">
-      <p class="card-title">Install</p>
-      <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest.plist" class="install-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
-          <path d="M8 12l4 4 4-4M12 8v8"/>
-        </svg>
-        Install via OTA
-      </a>
-      <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_signed.ipa" class="direct-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-        </svg>
-        Download .ipa directly
-      </a>
-      <div class="warning">
-        ⚠️ Requires a trusted certificate on your device. Tap "Install via OTA" only on iOS.
-      </div>
+    <!-- Cert grid -->
+    <div class="section-head">
+      <span class="section-label">Available Certificates</span>
+      <div class="section-line"></div>
     </div>
 
-    <!-- Steps card -->
-    <div class="card">
-      <p class="card-title">How to Install</p>
+    <div class="cert-grid">
+
+        <div class="cert-card" style="--card-index:0">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Xl Axiata, Pt Tbk</div>
+              <div class="cert-folder-raw">XL AXIATA, PT TBK</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">14265482e74caba7…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-XL_AXIATA__PT_TBK.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_XL_AXIATA__PT_TBK_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">14265482e74caba71011019f3dc17cd2660aed7db471bb51c48b706beef0e69e</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:1">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Wuling Power Corporation</div>
+              <div class="cert-folder-raw">Wuling Power Corporation</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">385e371e749b785d…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wuling_Power_Corporation.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Wuling_Power_Corporation_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">385e371e749b785d799a250e09e366ff2040df15e2103d88bb2d30c18720b161</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:2">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Wasu Media & Networking Co., Ltd (Jicengzhili Create20250114)</div>
+              <div class="cert-folder-raw">Wasu Media & Networking Co., Ltd (jicengzhili_create20250114)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">73811f412627266b…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wasu_Media___Networking_Co___Ltd__jicengzhili_create20250114_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Wasu_Media___Networking_Co___Ltd__jicengzhili_create20250114__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">73811f412627266b8d49a3681cfa1f65947c0c2858559708d9990f77bae0577e</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:3">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Wasu Media & Networking Co., Ltd (Com.Wasu.Demo)</div>
+              <div class="cert-folder-raw">Wasu Media & Networking Co., Ltd (com.wasu.demo)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">00d3589c6d55f601…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Wasu_Media___Networking_Co___Ltd__com_wasu_demo_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Wasu_Media___Networking_Co___Ltd__com_wasu_demo__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">00d3589c6d55f60192a29e7c7973ed386fb2b432d0da029670bf263caa6f5a28</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:4">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Vietnam Joint Stock Commercial Bank For Industry And Trade</div>
+              <div class="cert-folder-raw">VIETNAM JOINT STOCK COMMERCIAL BANK FOR INDUSTRY AND TRADE</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">5e39f0fce408fbae…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-VIETNAM_JOINT_STOCK_COMMERCIAL_BANK_FOR_INDUSTRY_AND_TRADE.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_VIETNAM_JOINT_STOCK_COMMERCIAL_BANK_FOR_INDUSTRY_AND_TRADE_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">5e39f0fce408fbae77c55b5e0065332f1cecd6119a566fe934dc7d3dcdecc6d1</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:5">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Vietnam Airlines Jsc</div>
+              <div class="cert-folder-raw">VIETNAM AIRLINES JSC</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">d2ec8e336afcec13…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-VIETNAM_AIRLINES_JSC.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_VIETNAM_AIRLINES_JSC_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">d2ec8e336afcec131ad281cce4bc93b650a1e3cee73de8933e50904a4feb6b2d</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:6">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Tianjin University Of Commerce</div>
+              <div class="cert-folder-raw">Tianjin University of Commerce</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">866234d8e2c74553…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Tianjin_University_of_Commerce.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Tianjin_University_of_Commerce_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">866234d8e2c74553759d7ad2b7665ea37d153d73c8324eb8827937c392352fad</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:7">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Qingdao Rural Commercial Bank Co., Ltd</div>
+              <div class="cert-folder-raw">Qingdao Rural Commercial Bank Co., Ltd</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">1f9daaf00069c3c7…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Qingdao_Rural_Commercial_Bank_Co___Ltd.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Qingdao_Rural_Commercial_Bank_Co___Ltd_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">1f9daaf00069c3c7f7ca3209ee9f039ddf6f5bd8aee917890a30356633f644d3</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:8">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Powerchina International Group Limited (Nj61No)</div>
+              <div class="cert-folder-raw">PowerChina International Group Limited (nj61nO)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">ca67c3be7da2b9eb…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__nj61nO_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_PowerChina_International_Group_Limited__nj61nO__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">ca67c3be7da2b9eb52bf083dc640e114532d6cc8e25ec42be767022694201945</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:9">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Powerchina International Group Limited (J3Krpy)</div>
+              <div class="cert-folder-raw">PowerChina International Group Limited (j3krPY)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">21fe6005feff728f…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__j3krPY_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_PowerChina_International_Group_Limited__j3krPY__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">21fe6005feff728f83a5bc924843807809129ce08f863f381e96baff9ad42134</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:10">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Powerchina International Group Limited (Iwamrs)</div>
+              <div class="cert-folder-raw">PowerChina International Group Limited (iWaMrs)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">fcc356df6c82b0e3…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__iWaMrs_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_PowerChina_International_Group_Limited__iWaMrs__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">fcc356df6c82b0e33a69016d27857d448465316c19c1cf4b8c598f37a48afe45</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:11">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Powerchina International Group Limited (Hru79V)</div>
+              <div class="cert-folder-raw">PowerChina International Group Limited (HRU79V)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">25d4c4a2d91befd1…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__HRU79V_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_PowerChina_International_Group_Limited__HRU79V__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">25d4c4a2d91befd1bfa7ad966f2a12b49223c4447e3207ed031761e2e9a3d466</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:12">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Powerchina International Group Limited (Doatyw)</div>
+              <div class="cert-folder-raw">PowerChina International Group Limited (DoaTYw)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">a1f9600ce1824cf1…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-PowerChina_International_Group_Limited__DoaTYw_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_PowerChina_International_Group_Limited__DoaTYw__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">a1f9600ce1824cf199964123a43045bdce7601418bda4afaac6c01965715650f</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:13">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">National Oilwell Varco, Inc</div>
+              <div class="cert-folder-raw">National Oilwell Varco, Inc</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">93179203c055ee8f…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-National_Oilwell_Varco__Inc.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_National_Oilwell_Varco__Inc_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">93179203c055ee8f82836f411df2ca9d31012a9a580ae5b84ceba96594288bf9</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:14">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Luoyang Postal Administration</div>
+              <div class="cert-folder-raw">Luoyang Postal Administration</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">f1472004bf079d95…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Luoyang_Postal_Administration.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Luoyang_Postal_Administration_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">f1472004bf079d95e8ff7813c3d334da9cd223a1b0b3c8fae75d297fc339f8f5</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:15">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Guangzhou Huahan Educational & Technology Co., Ltd.</div>
+              <div class="cert-folder-raw">Guangzhou Huahan Educational & Technology Co., Ltd.</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">fb9c4b6d2bcbddc0…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Guangzhou_Huahan_Educational___Technology_Co___Ltd_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Guangzhou_Huahan_Educational___Technology_Co___Ltd__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">fb9c4b6d2bcbddc0bc4747a0ab50d4d20a951fef7a84e89438142debed122aeb</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:16">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Suppose)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (suppose)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">e54f7a9cb6f73447…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__suppose_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__suppose__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">e54f7a9cb6f734473e41476ea7fecc991ed7b98222cdec09a1ceb076f01f91f1</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:17">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Branch Distribution)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (branch distribution)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">de2c4e6dde96ce79…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__branch_distribution_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__branch_distribution__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">de2c4e6dde96ce798b270950aa166b459eae0da5b67aa38b8d8a21a858cfeda9</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:18">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Ads)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (ads)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">656659d78695336f…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__ads_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__ads__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">656659d78695336f2e7e0cd4960c3d854ee7979def6050d27c477c73c02e47f1</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:19">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Scope Ent Distribution)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (Scope ent distribution)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">bb9b34f1240511ef…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Scope_ent_distribution_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__Scope_ent_distribution__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">bb9b34f1240511ef1853cf67986e4993e3da82e9f0a63bf5d3382a6bda3211e5</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:20">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Hls)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (HLS)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">e1dd5b1cdf8467fd…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__HLS_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__HLS__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">e1dd5b1cdf8467fd7471d6b90bb85d06c2c7f0770a5d62e67468ea0e8fb2c28f</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:21">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Fairplay)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (Fairplay)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">31b6752a00ad4071…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Fairplay_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__Fairplay__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">31b6752a00ad40715389d45c702524f8a8a8f63eea5bc332dde4e8b04ab04a8b</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:22">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Deeplink)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (Deeplink)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">d4f99f935b575120…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Deeplink_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__Deeplink__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">d4f99f935b575120f8f4c561f388df0056cffec1631464939bc4abda95821af6</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:23">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Global Takeoff, Inc (Airtel Adhoc)</div>
+              <div class="cert-folder-raw">Global Takeoff, Inc (Airtel Adhoc)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">c67b118205a9dc54…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Global_Takeoff__Inc__Airtel_Adhoc_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Global_Takeoff__Inc__Airtel_Adhoc__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">c67b118205a9dc5485b5122876ade6c2fa72757f7160974201752907c5a08504</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:24">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Forevermark Marketing(Shanghai ) Limited</div>
+              <div class="cert-folder-raw">Forevermark Marketing(Shanghai ) Limited</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">d3aeadec211f66e4…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Forevermark_Marketing_Shanghai___Limited.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Forevermark_Marketing_Shanghai___Limited_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">d3aeadec211f66e4a1cd53e0af064d03cf763aff1fdf04259f58708b574ecdef</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:25">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Etisalat   Emirates Telecommunications Corporation</div>
+              <div class="cert-folder-raw">Etisalat - Emirates Telecommunications Corporation</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">d9f63e51315bc351…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Etisalat_-_Emirates_Telecommunications_Corporation.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Etisalat_-_Emirates_Telecommunications_Corporation_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">d9f63e51315bc351a2d35d0b62c907f43a3c999f18a7e283891ed5f429fc65e2</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:26">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (Oadav)</div>
+              <div class="cert-folder-raw">Commission on Elections (oadav)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">104cdea10a424123…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__oadav_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__oadav__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">104cdea10a4241239900caf928f21b55d9e6304c6afbdc54588d85f6e21a2f8c</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:27">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (United Politics)</div>
+              <div class="cert-folder-raw">Commission on Elections (United politics)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">5f9a69ee181277d7…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__United_politics_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__United_politics__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">5f9a69ee181277d7807b80f0bf94d30e498fee0060ed1fda84531982f2d92eb8</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:28">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (Report)</div>
+              <div class="cert-folder-raw">Commission on Elections (Report)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">d75d2713722f623f…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Report_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__Report__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">d75d2713722f623fd15a2169ae1327d79f672dfe9f371b9aebe67a293025b9cd</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:29">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (Ems Manage)</div>
+              <div class="cert-folder-raw">Commission on Elections (EMS Manage)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">6ca85ea63f5e9a7a…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__EMS_Manage_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__EMS_Manage__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">6ca85ea63f5e9a7a96a9f54a7c558e61890b30e4f80c382798cf265b62d396be</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:30">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (Complaints Management)</div>
+              <div class="cert-folder-raw">Commission on Elections (Complaints Management)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">87ce36dc458d2e9a…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Complaints_Management_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__Complaints_Management__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">87ce36dc458d2e9a494ae7e5815cc37e102a9a70ddff62aa6cbd88c3836c4a8d</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:31">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Commission On Elections (Committee Supervision)</div>
+              <div class="cert-folder-raw">Commission on Elections (Committee Supervision)</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">8ca1a8acc4e39951…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Commission_on_Elections__Committee_Supervision_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Commission_on_Elections__Committee_Supervision__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">8ca1a8acc4e39951d91cc500cb8ab99395af5aa604eebbaa61cf332226b9660d</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:32">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">China Telecommunications Corporation</div>
+              <div class="cert-folder-raw">China Telecommunications Corporation</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">6aff8e75de9fb987…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_Telecommunications_Corporation.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_China_Telecommunications_Corporation_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">6aff8e75de9fb987967895d2461c1cb26d02c341334ffc336dba1b764f518bae</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:33">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">China National Heavy Duty Truck Group Co., Ltd.</div>
+              <div class="cert-folder-raw">China National Heavy Duty Truck Group Co., Ltd.</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">fba0bdbbb185d96b…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_National_Heavy_Duty_Truck_Group_Co___Ltd_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_China_National_Heavy_Duty_Truck_Group_Co___Ltd__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">fba0bdbbb185d96b9beca2ef42632c367f13963261f89f68e1bad920c2c1fec7</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:34">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">China Academy Of Railway Sciences</div>
+              <div class="cert-folder-raw">China Academy of Railway Sciences</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">8985c63d822d9784…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-China_Academy_of_Railway_Sciences.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_China_Academy_of_Railway_Sciences_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">8985c63d822d9784a981538aec67d97aaff2bd279df0251f28affd1345fa89be</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:35">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Beijing Zhizhangyi Inc.</div>
+              <div class="cert-folder-raw">Beijing Zhizhangyi Inc.</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">ca25d2cd77f95f6d…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Beijing_Zhizhangyi_Inc_.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Beijing_Zhizhangyi_Inc__signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">ca25d2cd77f95f6d8bcea322be062a9e0a2cb9fc8e087372f73d73e141969c9e</div>
+          </details>
+        </div>
+
+        <div class="cert-card" style="--card-index:36">
+          <div class="cert-header">
+            <div class="cert-icon">🔐</div>
+            <div class="cert-meta">
+              <div class="cert-name">Aramco Services Company</div>
+              <div class="cert-folder-raw">Aramco Services Company</div>
+            </div>
+            <span class="badge">Signed</span>
+          </div>
+
+          <div class="cert-details">
+            <div class="detail-item">
+              <span class="detail-label">Size</span>
+              <span class="detail-val">13.5 MB</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">SHA-256</span>
+              <span class="detail-val mono">7699562fbb0f0694…</span>
+            </div>
+          </div>
+
+          <div class="cert-actions">
+            <a href="itms-services://?action=download-manifest&url=https://nikos-projects.github.io/ksign-hub/manifest-Aramco_Services_Company.plist" class="install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M8 12l4 4 4-4M12 8v8"/>
+              </svg>
+              Install via OTA
+            </a>
+            <a href="https://nikos-projects.github.io/ksign-hub/ksign_v1.5.1_Aramco_Services_Company_signed.ipa" class="direct-btn" title="Download .ipa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              .ipa
+            </a>
+          </div>
+
+          <details class="sha-details">
+            <summary>Full SHA-256</summary>
+            <div class="sha-box">7699562fbb0f069494fcbada5ee14d3b34a5d38d3c59a69a83267b1297cfd2a6</div>
+          </details>
+        </div>
+    </div>
+
+    <!-- How to install -->
+    <div class="section-head">
+      <span class="section-label">How to Install</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="info-card">
       <ol class="steps">
-        <li><span class="step-num">1</span>Tap <strong>Install via OTA</strong> above on your iPhone or iPad.</li>
+        <li><span class="step-num">1</span>Pick a certificate above and tap <strong>Install via OTA</strong> on your iPhone or iPad.</li>
         <li><span class="step-num">2</span>Follow the iOS prompts to install the profile &amp; app.</li>
         <li><span class="step-num">3</span>Open KSign — your certificate is pre-loaded automatically.</li>
-        <li><span class="step-num">4</span>If prompted, go to Settings → General → VPN &amp; Device Management and trust the developer.</li>
+        <li><span class="step-num">4</span>If prompted, go to <strong>Settings → General → VPN &amp; Device Management</strong> and trust the developer.</li>
       </ol>
-    </div>
-
-    <!-- Integrity card -->
-    <div class="card">
-      <p class="card-title">Integrity</p>
-      <div class="sha-box">SHA-256: 6d955de91a356a427267d1064574c69b2f3b6ce265f72eb5c73be7f6a6c17bc5</div>
+      <div class="warning">
+        ⚠️ Tap <em>Install via OTA</em> only on an iOS device. Each card installs KSign pre-bundled with that specific certificate.
+      </div>
     </div>
 
     <footer>
       Auto-built by <a href="https://github.com/nikos-projects/ksign-hub">GitHub Actions</a> ·
-      2026-05-12 17:49 UTC<br>
+      2026-05-12 18:29 UTC<br>
       KSign by <a href="https://github.com/nyasami/ksign">nyasami</a>
     </footer>
   </div>
