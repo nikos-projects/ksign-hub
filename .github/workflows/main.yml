@@ -58,8 +58,11 @@ jobs:
 
       - name: Sanitize cache key
         id: cache_key
+        env:
+          CERT_FOLDER: ${{ steps.check.outputs.cert_folder }}
+          IPA_VERSION: ${{ steps.check.outputs.ipa_version }}
         run: |
-          SAFE_KEY=$(echo "build-state-${{ steps.check.outputs.cert_folder }}-${{ steps.check.outputs.ipa_version }}" \
+          SAFE_KEY=$(echo "build-state-${CERT_FOLDER}-${IPA_VERSION}" \
             | tr -cs 'a-zA-Z0-9._-' '-' \
             | sed 's/-\+/-/g; s/^-//; s/-$//')
           echo "key=$SAFE_KEY" >> $GITHUB_OUTPUT
@@ -106,7 +109,7 @@ jobs:
       # ── 2. Fetch ALL cert bundles from NovaCerts repo ────────────────────────
       - name: Fetch all certificate bundles
         env:
-          CERT_REPO_PAT:    ${{ secrets.CERT_REPO_PAT }}
+          CERT_REPO_PAT:     ${{ secrets.CERT_REPO_PAT }}
           CERT_FOLDERS_JSON: ${{ needs.check-and-build.outputs.cert_folders_json }}
         run: python scripts/fetch_cert.py
 
@@ -124,65 +127,7 @@ jobs:
 
       # ── 5. Sign every bundled IPA with zsign ──────────────────────────────────
       - name: Sign all IPAs
-        run: |
-          set -e
-          pip install requests  # already done but keep idempotent
-
-          MANIFEST="/tmp/build/bundled_manifest.json"
-          if [ ! -f "$MANIFEST" ]; then
-            echo "[ERROR] bundled_manifest.json not found"
-            exit 1
-          fi
-
-          mkdir -p /tmp/build/signed
-          SIGNED_MANIFEST="[]"
-
-          # jq loop: iterate over each cert entry
-          COUNT=$(jq length "$MANIFEST")
-          echo "Signing $COUNT IPA(s)..."
-
-          for i in $(seq 0 $((COUNT - 1))); do
-            FOLDER=$(jq -r ".[$i].folder"      "$MANIFEST")
-            P12=$(   jq -r ".[$i].p12_path"    "$MANIFEST")
-            MP=$(    jq -r ".[$i].mp_path"     "$MANIFEST")
-            PASS=$(  jq -r ".[$i].password"    "$MANIFEST")
-            BUNDLED=$(jq -r ".[$i].bundled_ipa" "$MANIFEST")
-
-            # URL-safe slug for the output filename
-            SLUG=$(echo "$FOLDER" | tr -cs 'a-zA-Z0-9_-' '_' | sed 's/_\+/_/g; s/^_//; s/_$//')
-            OUTPUT="/tmp/build/signed/${SLUG}_signed.ipa"
-
-            echo ""
-            echo "[$((i+1))/$COUNT] Signing: $FOLDER"
-            echo "  P12:     $P12"
-            echo "  MP:      $MP"
-            echo "  Bundled: $BUNDLED"
-            echo "  Output:  $OUTPUT"
-
-            zsign \
-              -k "$P12" \
-              -p "$PASS" \
-              -m "$MP" \
-              -o "$OUTPUT" \
-              -z 9 \
-              "$BUNDLED"
-
-            echo "  ✅ Signed: $(du -sh $OUTPUT | cut -f1)"
-
-            # Append to signed manifest (bash-friendly JSON build)
-            ENTRY=$(jq -n \
-              --arg folder  "$FOLDER" \
-              --arg signed  "$OUTPUT" \
-              --arg p12     "$P12" \
-              --arg mp      "$MP" \
-              '{"folder": $folder, "signed_ipa": $signed, "p12_path": $p12, "mp_path": $mp}')
-            SIGNED_MANIFEST=$(echo "$SIGNED_MANIFEST" | jq ". + [$ENTRY]")
-          done
-
-          echo "$SIGNED_MANIFEST" > /tmp/build/signed_manifest.json
-          echo ""
-          echo "✅ All IPAs signed. signed_manifest.json written."
-          cat /tmp/build/signed_manifest.json | jq '[.[] | {folder, signed_ipa}]'
+        run: python scripts/sign_ipas.py
 
       # ── 6. Generate manifest.plist(s) & index.html ───────────────────────────
       - name: Generate deployment assets
@@ -205,21 +150,33 @@ jobs:
 
       # ── 8. Save build state ───────────────────────────────────────────────────
       - name: Save build state
+        env:
+          CERT_FOLDER: ${{ needs.check-and-build.outputs.cert_folder }}
+          IPA_VERSION: ${{ needs.check-and-build.outputs.ipa_version }}
         run: |
           mkdir -p .state
-          echo "${{ needs.check-and-build.outputs.cert_folder }}" > .state/last_cert
-          echo "${{ needs.check-and-build.outputs.ipa_version }}" > .state/last_ipa_version
+          printf '%s' "$CERT_FOLDER" > .state/last_cert
+          printf '%s' "$IPA_VERSION" > .state/last_ipa_version
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .state/
           git diff --staged --quiet || git commit -m "chore: update build state [skip ci]"
           git push
 
+      # ── 9. Summary ────────────────────────────────────────────────────────────
       - name: Summary
+        env:
+          IPA_VERSION:  ${{ needs.check-and-build.outputs.ipa_version }}
+          CERT_FOLDER:  ${{ needs.check-and-build.outputs.cert_folder }}
+          ALL_CERTS:    ${{ needs.check-and-build.outputs.cert_folders_json }}
+          REPO_OWNER:   ${{ github.repository_owner }}
+          REPO_NAME:    ${{ github.event.repository.name }}
         run: |
-          echo "## ✅ Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **IPA Version:** ${{ needs.check-and-build.outputs.ipa_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Cert Folder (latest):** ${{ needs.check-and-build.outputs.cert_folder }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **All Certs:** ${{ needs.check-and-build.outputs.cert_folders_json }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **OTA URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## ✅ Build Complete"
+            echo ""
+            echo "- **IPA Version:** ${IPA_VERSION}"
+            echo "- **Cert Folder (latest):** ${CERT_FOLDER}"
+            echo "- **All Certs:** ${ALL_CERTS}"
+            echo "- **OTA URL:** https://${REPO_OWNER}.github.io/${REPO_NAME}/"
+          } >> "$GITHUB_STEP_SUMMARY"
