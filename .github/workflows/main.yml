@@ -57,11 +57,19 @@ jobs:
         run: |
           python scripts/check_updates.py
 
+      - name: Sanitize cache key
+        id: cache_key
+        run: |
+          SAFE_KEY=$(echo "build-state-${{ steps.check.outputs.cert_folder }}-${{ steps.check.outputs.ipa_version }}" \
+            | tr -cs 'a-zA-Z0-9._-' '-' \
+            | sed 's/-\+/-/g; s/^-//; s/-$//')
+          echo "key=$SAFE_KEY" >> $GITHUB_OUTPUT
+
       - name: Cache state
         uses: actions/cache@v4
         with:
           path: .state
-          key: build-state-${{ steps.check.outputs.cert_folder }}-${{ steps.check.outputs.ipa_version }}
+          key: ${{ steps.cache_key.outputs.key }}
 
   sign-and-deploy:
     needs: check-and-build
