@@ -21,7 +21,6 @@ permissions:
 env:
   CERT_REPO: "NovaDev404/NovaCerts"
   IPA_REPO: "nyasami/ksign"
-  ZSIGN_VERSION: "0.9"
   APP_NAME: "KSign"
   BUNDLE_ID: "com.nyasami.ksign"
 
@@ -29,10 +28,11 @@ jobs:
   check-and-build:
     runs-on: ubuntu-latest
     outputs:
-      should_build: ${{ steps.check.outputs.should_build }}
-      cert_folder: ${{ steps.check.outputs.cert_folder }}
-      ipa_url: ${{ steps.check.outputs.ipa_url }}
-      ipa_version: ${{ steps.check.outputs.ipa_version }}
+      should_build:      ${{ steps.check.outputs.should_build }}
+      cert_folder:       ${{ steps.check.outputs.cert_folder }}
+      cert_folders_json: ${{ steps.check.outputs.cert_folders_json }}
+      ipa_url:           ${{ steps.check.outputs.ipa_url }}
+      ipa_version:       ${{ steps.check.outputs.ipa_version }}
 
     steps:
       - name: Checkout this repo
@@ -54,8 +54,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CERT_REPO_PAT: ${{ secrets.CERT_REPO_PAT }}
           FORCE_REBUILD: ${{ github.event.inputs.force_rebuild }}
-        run: |
-          python scripts/check_updates.py
+        run: python scripts/check_updates.py
 
       - name: Sanitize cache key
         id: cache_key
@@ -88,7 +87,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Python deps
-        run: pip install requests Pillow
+        run: pip install requests
 
       # ── 1. Install zsign ─────────────────────────────────────────────────────
       - name: Install zsign
@@ -104,58 +103,93 @@ jobs:
           sudo cp ../../bin/zsign /usr/local/bin/zsign
           zsign --version || echo "zsign installed"
 
-      # ── 2. Fetch latest cert from NovaCerts repo ─────────────────────────────
-      - name: Fetch latest certificate bundle
+      # ── 2. Fetch ALL cert bundles from NovaCerts repo ────────────────────────
+      - name: Fetch all certificate bundles
         env:
-          CERT_REPO_PAT: ${{ secrets.CERT_REPO_PAT }}
-          CERT_FOLDER: ${{ needs.check-and-build.outputs.cert_folder }}
-        run: |
-          python scripts/fetch_cert.py
+          CERT_REPO_PAT:    ${{ secrets.CERT_REPO_PAT }}
+          CERT_FOLDERS_JSON: ${{ needs.check-and-build.outputs.cert_folders_json }}
+        run: python scripts/fetch_cert.py
 
       # ── 3. Fetch latest KSign IPA ─────────────────────────────────────────────
       - name: Fetch latest KSign IPA
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IPA_URL: ${{ needs.check-and-build.outputs.ipa_url }}
+          GH_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          IPA_URL:     ${{ needs.check-and-build.outputs.ipa_url }}
           IPA_VERSION: ${{ needs.check-and-build.outputs.ipa_version }}
-        run: |
-          python scripts/fetch_ipa.py
+        run: python scripts/fetch_ipa.py
 
-      # ── 4. Bundle cert into IPA for KSign pre-import ─────────────────────────
-      - name: Bundle certificate into IPA
-        run: |
-          python scripts/bundle_cert.py
+      # ── 4. Bundle each cert into its own copy of the IPA ─────────────────────
+      - name: Bundle certificates into IPAs
+        run: python scripts/bundle_cert.py
 
-      # ── 5. Sign the IPA with zsign ────────────────────────────────────────────
-      - name: Sign IPA
+      # ── 5. Sign every bundled IPA with zsign ──────────────────────────────────
+      - name: Sign all IPAs
         run: |
           set -e
+          pip install requests  # already done but keep idempotent
 
-          P12_FILE=$(cat /tmp/build/p12_path.txt)
-          MP_FILE=$(cat /tmp/build/mp_path.txt)
-          PASSWORD=$(cat /tmp/build/cert_password.txt)
-          IPA_FILE="/tmp/build/ksign_bundled.ipa"
-          OUTPUT_IPA="/tmp/build/ksign_signed.ipa"
+          MANIFEST="/tmp/build/bundled_manifest.json"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "[ERROR] bundled_manifest.json not found"
+            exit 1
+          fi
 
-          echo "Signing with: $P12_FILE | $MP_FILE"
+          mkdir -p /tmp/build/signed
+          SIGNED_MANIFEST="[]"
 
-          zsign \
-            -k "$P12_FILE" \
-            -p "$PASSWORD" \
-            -m "$MP_FILE" \
-            -o "$OUTPUT_IPA" \
-            -z 9 \
-            "$IPA_FILE"
+          # jq loop: iterate over each cert entry
+          COUNT=$(jq length "$MANIFEST")
+          echo "Signing $COUNT IPA(s)..."
 
-          echo "Signed IPA size: $(du -sh $OUTPUT_IPA)"
+          for i in $(seq 0 $((COUNT - 1))); do
+            FOLDER=$(jq -r ".[$i].folder"      "$MANIFEST")
+            P12=$(   jq -r ".[$i].p12_path"    "$MANIFEST")
+            MP=$(    jq -r ".[$i].mp_path"     "$MANIFEST")
+            PASS=$(  jq -r ".[$i].password"    "$MANIFEST")
+            BUNDLED=$(jq -r ".[$i].bundled_ipa" "$MANIFEST")
 
-      # ── 6. Generate manifest.plist & index.html ───────────────────────────────
+            # URL-safe slug for the output filename
+            SLUG=$(echo "$FOLDER" | tr -cs 'a-zA-Z0-9_-' '_' | sed 's/_\+/_/g; s/^_//; s/_$//')
+            OUTPUT="/tmp/build/signed/${SLUG}_signed.ipa"
+
+            echo ""
+            echo "[$((i+1))/$COUNT] Signing: $FOLDER"
+            echo "  P12:     $P12"
+            echo "  MP:      $MP"
+            echo "  Bundled: $BUNDLED"
+            echo "  Output:  $OUTPUT"
+
+            zsign \
+              -k "$P12" \
+              -p "$PASS" \
+              -m "$MP" \
+              -o "$OUTPUT" \
+              -z 9 \
+              "$BUNDLED"
+
+            echo "  ✅ Signed: $(du -sh $OUTPUT | cut -f1)"
+
+            # Append to signed manifest (bash-friendly JSON build)
+            ENTRY=$(jq -n \
+              --arg folder  "$FOLDER" \
+              --arg signed  "$OUTPUT" \
+              --arg p12     "$P12" \
+              --arg mp      "$MP" \
+              '{"folder": $folder, "signed_ipa": $signed, "p12_path": $p12, "mp_path": $mp}')
+            SIGNED_MANIFEST=$(echo "$SIGNED_MANIFEST" | jq ". + [$ENTRY]")
+          done
+
+          echo "$SIGNED_MANIFEST" > /tmp/build/signed_manifest.json
+          echo ""
+          echo "✅ All IPAs signed. signed_manifest.json written."
+          cat /tmp/build/signed_manifest.json | jq '[.[] | {folder, signed_ipa}]'
+
+      # ── 6. Generate manifest.plist(s) & index.html ───────────────────────────
       - name: Generate deployment assets
         env:
-          IPA_VERSION: ${{ needs.check-and-build.outputs.ipa_version }}
+          IPA_VERSION:       ${{ needs.check-and-build.outputs.ipa_version }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          python scripts/generate_assets.py
+        run: python scripts/generate_assets.py
 
       # ── 7. Deploy to gh-pages ─────────────────────────────────────────────────
       - name: Deploy to GitHub Pages
@@ -186,5 +220,6 @@ jobs:
           echo "## ✅ Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **IPA Version:** ${{ needs.check-and-build.outputs.ipa_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Cert Folder:** ${{ needs.check-and-build.outputs.cert_folder }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cert Folder (latest):** ${{ needs.check-and-build.outputs.cert_folder }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **All Certs:** ${{ needs.check-and-build.outputs.cert_folders_json }}" >> $GITHUB_STEP_SUMMARY
           echo "- **OTA URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
