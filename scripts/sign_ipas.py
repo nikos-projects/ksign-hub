@@ -86,6 +86,8 @@ def main():
             "mp_path":        mp,
             "bundle_id":      entry.get("bundle_id",      ""),
             "bundle_version": entry.get("bundle_version", ""),
+            "cert_expiry":    entry.get("cert_expiry",    "unknown"),
+            "cert_days_left": entry.get("cert_days_left", None),
         })
 
     if not signed_entries:
