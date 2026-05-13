@@ -73,10 +73,12 @@ def main():
         print(f"  ✅ Signed: {size:,} bytes → {output}")
 
         signed_entries.append({
-            "folder":     folder,
-            "signed_ipa": output,
-            "p12_path":   p12,
-            "mp_path":    mp,
+            "folder":         folder,
+            "signed_ipa":     output,
+            "p12_path":       p12,
+            "mp_path":        mp,
+            "bundle_id":      entry.get("bundle_id",      ""),
+            "bundle_version": entry.get("bundle_version", ""),
         })
 
     if not signed_entries:
