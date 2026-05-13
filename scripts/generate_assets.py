@@ -116,7 +116,7 @@ def make_index_html(apps_data, base_url, build_time):
       <section class="app-card" id="{app_slug}">
         <div class="app-header">
           <h2 class="app-title">{app_name}</h2>
-          <span class="app-version">v{app_version}</span>
+          <span class="app-version">{app_version if app_version.startswith("v") else "v" + app_version}</span>
         </div>
         <p class="app-subtitle">Choose a certificate to install with:</p>
         <table class="cert-table">
@@ -278,7 +278,7 @@ def make_index_html(apps_data, base_url, build_time):
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       text-decoration: none;
-      padding: .4rem 1rem;
+      padding: .4rem .75rem;
       border-radius: 8px;
       font-size: .85rem;
       font-weight: 600;
@@ -315,6 +315,11 @@ def make_index_html(apps_data, base_url, build_time):
 
     @media (max-width: 500px) {{
       .bundle-id {{ display: none; }}
+      .cert-table {{ table-layout: fixed; width: 100%; }}
+      .cert-name  {{ width: 45%; word-break: break-word; }}
+      .expiry-badge {{ font-size: .7rem; padding: .2rem .4rem; }}
+      .install-btn  {{ padding: .35rem .55rem; font-size: .8rem; }}
+      .app-card {{ padding: 1rem; }}
     }}
   </style>
 </head>
