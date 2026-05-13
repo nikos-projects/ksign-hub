@@ -7,6 +7,9 @@ Generates for EACH signed IPA:
 
 Plus a single index.html listing ALL certificates with individual OTA buttons.
 Reads /tmp/build/signed_manifest.json produced by the sign step.
+
+Also extracts expiry dates from .p12 and .mobileprovision files and
+displays days-remaining on each cert card with colour-coded urgency.
 """
 
 import os
@@ -15,6 +18,9 @@ import json
 import shutil
 import hashlib
 import re
+import subprocess
+import plistlib
+import tempfile
 from datetime import datetime, timezone
 from urllib.parse import quote
 
@@ -33,6 +39,195 @@ BASE_URL   = f"https://{REPO_OWNER}.github.io/{REPO_NAME}"
 
 DNS_URL    = "https://github.com/dns-khoindvn/top-country-stats/releases/download/DNS/khoindvn.io.vn.mobileconfig"
 
+
+# ── Expiry extraction ─────────────────────────────────────────────────────────
+
+def _days_until(dt: datetime) -> int:
+    """Return signed days between now (UTC) and *dt*. Negative = already expired."""
+    now = datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return (dt - now).days
+
+
+def extract_p12_expiry(p12_path: str, password: str) -> datetime | None:
+    """
+    Use openssl to read the certificate expiry from a .p12 file.
+    Returns a timezone-aware datetime or None on failure.
+
+    openssl pipeline:
+      pkcs12 -in <p12> -passin pass:<pw> -nokeys -clcerts
+        → prints the leaf cert in PEM
+      x509 -noout -enddate
+        → prints "notAfter=<date string>"
+    """
+    try:
+        # Step 1: extract cert PEM from p12
+        p12_cmd = [
+            "openssl", "pkcs12",
+            "-in", p12_path,
+            "-passin", f"pass:{password}",
+            "-nokeys", "-clcerts",
+            "-legacy",          # needed for older p12 files on OpenSSL 3
+        ]
+        p12_result = subprocess.run(
+            p12_cmd,
+            capture_output=True, timeout=30,
+        )
+
+        pem_data = p12_result.stdout
+        if not pem_data or b"BEGIN CERTIFICATE" not in pem_data:
+            # Try without -legacy (some OpenSSL builds don't support it)
+            p12_cmd_nol = [c for c in p12_cmd if c != "-legacy"]
+            p12_result = subprocess.run(p12_cmd_nol, capture_output=True, timeout=30)
+            pem_data = p12_result.stdout
+
+        if not pem_data or b"BEGIN CERTIFICATE" not in pem_data:
+            print(f"  [WARN] Could not extract PEM from p12: {p12_path}")
+            return None
+
+        # Step 2: get notAfter from PEM
+        x509_result = subprocess.run(
+            ["openssl", "x509", "-noout", "-enddate"],
+            input=pem_data,
+            capture_output=True, timeout=15,
+        )
+        out = x509_result.stdout.decode("utf-8", errors="ignore").strip()
+        # out looks like: notAfter=Nov 15 12:00:00 2025 GMT
+        m = re.search(r"notAfter=(.+)", out)
+        if not m:
+            print(f"  [WARN] Could not parse notAfter from: {out!r}")
+            return None
+
+        date_str = m.group(1).strip()
+        dt = datetime.strptime(date_str, "%b %d %H:%M:%S %Y %Z")
+        return dt.replace(tzinfo=timezone.utc)
+
+    except Exception as e:
+        print(f"  [WARN] P12 expiry extraction failed: {e}")
+        return None
+
+
+def extract_mp_expiry(mp_path: str) -> datetime | None:
+    """
+    Parse ExpirationDate from a .mobileprovision file.
+    A mobileprovision is a CMS-signed blob; the embedded plist is between
+    the two PEM-like headers. We strip the binary wrapper and parse with plistlib.
+    Returns a timezone-aware datetime or None on failure.
+    """
+    try:
+        with open(mp_path, "rb") as f:
+            raw = f.read()
+
+        # The embedded plist starts at "<?xml" or the binary plist magic b'\x62\x70\x6c\x69\x73\x74'
+        # Most provisioning profiles contain an XML plist — find it.
+        start = raw.find(b"<?xml")
+        if start == -1:
+            # Try binary plist
+            start = raw.find(b"bplist")
+        if start == -1:
+            print(f"  [WARN] Could not locate embedded plist in {mp_path}")
+            return None
+
+        end = raw.find(b"</plist>", start)
+        if end == -1:
+            print(f"  [WARN] Could not find end of plist in {mp_path}")
+            return None
+
+        plist_bytes = raw[start: end + len(b"</plist>")]
+        data = plistlib.loads(plist_bytes)
+
+        exp = data.get("ExpirationDate")
+        if not isinstance(exp, datetime):
+            print(f"  [WARN] ExpirationDate missing or wrong type in {mp_path}")
+            return None
+
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        return exp
+
+    except Exception as e:
+        print(f"  [WARN] Mobileprovision expiry extraction failed: {e}")
+        return None
+
+
+def expiry_info(p12_path: str, mp_path: str, password: str) -> dict:
+    """
+    Returns a dict with expiry info for both the p12 cert and mobileprovision.
+    {
+      "p12_expiry":  "2025-11-15" | None,
+      "p12_days":    42 | None,
+      "mp_expiry":   "2025-10-01" | None,
+      "mp_days":     -3 | None,     # negative = already expired
+      "worst_days":  -3 | None,     # the more urgent of the two
+    }
+    """
+    p12_dt  = extract_p12_expiry(p12_path, password)
+    mp_dt   = extract_mp_expiry(mp_path)
+
+    p12_days = _days_until(p12_dt) if p12_dt else None
+    mp_days  = _days_until(mp_dt)  if mp_dt  else None
+
+    p12_expiry = p12_dt.strftime("%Y-%m-%d") if p12_dt else None
+    mp_expiry  = mp_dt.strftime("%Y-%m-%d")  if mp_dt  else None
+
+    known_days = [d for d in [p12_days, mp_days] if d is not None]
+    worst_days = min(known_days) if known_days else None
+
+    return {
+        "p12_expiry":  p12_expiry,
+        "p12_days":    p12_days,
+        "mp_expiry":   mp_expiry,
+        "mp_days":     mp_days,
+        "worst_days":  worst_days,
+    }
+
+
+# ── Expiry chip renderer ──────────────────────────────────────────────────────
+
+def _expiry_chip_style(days: int | None) -> tuple[str, str, str]:
+    """
+    Returns (label, color_var, bg_rgba) based on days remaining.
+    Thresholds: >30 green, 8-30 yellow, 1-7 orange, <=0 red.
+    """
+    if days is None:
+        return "Unknown", "#5a6180", "rgba(90,97,128,0.12)"
+    if days <= 0:
+        return "Expired", "#f87171", "rgba(248,113,113,0.12)"
+    if days <= 7:
+        return f"{days}d left", "#fb923c", "rgba(251,146,60,0.12)"
+    if days <= 30:
+        return f"{days}d left", "#fbbf24", "rgba(251,191,36,0.12)"
+    return f"{days}d left", "#34d399", "rgba(52,211,153,0.10)"
+
+
+def expiry_chips_html(info: dict) -> str:
+    """Render two expiry chips: one for P12, one for mobileprovision."""
+    chips = []
+    for label, key_days, key_date, icon in [
+        ("Cert",  "p12_days", "p12_expiry", "🔑"),
+        ("Prov",  "mp_days",  "mp_expiry",  "📋"),
+    ]:
+        days = info.get(key_days)
+        date = info.get(key_date) or "—"
+        text, color, bg = _expiry_chip_style(days)
+        border_color = color.replace(")", ", 0.35)").replace("rgb(", "rgba(") if "rgb" in color else color
+
+        chips.append(
+            f'<div class="expiry-chip" style="background:{bg};border-color:{color}33;" '
+            f'title="{icon} {label} expires {date}">'
+            f'  <span class="expiry-icon">{icon}</span>'
+            f'  <div class="expiry-body">'
+            f'    <span class="expiry-label">{label}</span>'
+            f'    <span class="expiry-val" style="color:{color}">{text}</span>'
+            f'  </div>'
+            f'</div>'
+        )
+
+    return '<div class="expiry-row">' + "".join(chips) + "</div>"
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def sha256(path):
     h = hashlib.sha256()
@@ -108,11 +303,32 @@ def cert_card_html(idx, cert):
     plist_url = cert["plist_url"]
     sha       = cert["sha256"]
     size_mb   = cert["size_mb"]
+    exp_info  = cert.get("expiry", {})
 
     # plist URL MUST be percent-encoded inside the itms-services query string
     itms_url  = f"itms-services://?action=download-manifest&url={quote(plist_url, safe='')}"
     short_sha = sha[:16]
     display   = folder.replace("_", " ").replace("-", " ").title()
+
+    # Badge colour: reflect worst expiry state
+    worst = exp_info.get("worst_days")
+    if worst is None:
+        badge_color = ""
+        badge_label = "Signed"
+    elif worst <= 0:
+        badge_color = 'style="background:rgba(248,113,113,0.12);color:#f87171;border-color:#f8717133;"'
+        badge_label = "Expired"
+    elif worst <= 7:
+        badge_color = 'style="background:rgba(251,146,60,0.12);color:#fb923c;border-color:#fb923c33;"'
+        badge_label = "Expiring"
+    elif worst <= 30:
+        badge_color = 'style="background:rgba(251,191,36,0.10);color:#fbbf24;border-color:#fbbf2433;"'
+        badge_label = "Valid"
+    else:
+        badge_color = ""
+        badge_label = "Valid"
+
+    expiry_html = expiry_chips_html(exp_info) if exp_info else ""
 
     return f"""
       <div class="cert-card" style="--card-index:{idx}">
@@ -122,8 +338,10 @@ def cert_card_html(idx, cert):
             <div class="cert-name">{display}</div>
             <div class="cert-folder-raw">{folder}</div>
           </div>
-          <span class="badge">Signed</span>
+          <span class="badge" {badge_color}>{badge_label}</span>
         </div>
+
+        {expiry_html}
 
         <div class="cert-details">
           <div class="detail-item">
@@ -237,7 +455,6 @@ def generate_html(certs, version, build_time):
       position: relative; z-index: 1;
       max-width: 860px;
       margin: 0 auto;
-      /* 16px minimum on each side; expands to safe-area on notched phones */
       padding-top: 0;
       padding-bottom: calc(40px + env(safe-area-inset-bottom));
       padding-left:  max(16px, env(safe-area-inset-left));
@@ -375,11 +592,7 @@ def generate_html(certs, version, build_time):
     }}
     .section-line {{ flex: 1; height: 1px; background: var(--border2); }}
 
-    /* ── Cert grid ──
-       min(100%, 300px) means each column is at most 300px but never
-       wider than the container — so on a 390px iPhone there is exactly
-       1 column and the card fills the width with 16px margins each side.
-    ── */
+    /* ── Cert grid ── */
     .cert-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
@@ -436,6 +649,50 @@ def generate_html(certs, version, build_time):
     }}
     .badge::before {{ content: '● '; font-size: 0.45rem; }}
 
+    /* ── Expiry row ── */
+    .expiry-row {{
+      display: flex;
+      gap: 0.45rem;
+    }}
+
+    .expiry-chip {{
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.42rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+    }}
+
+    .expiry-icon {{
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }}
+
+    .expiry-body {{
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      min-width: 0;
+    }}
+
+    .expiry-label {{
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }}
+
+    .expiry-val {{
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      white-space: nowrap;
+    }}
+
     /* ── Detail chips ── */
     .cert-details {{ display: flex; gap: 0.45rem; }}
     .detail-item {{
@@ -456,11 +713,7 @@ def generate_html(certs, version, build_time):
       font-size: 0.65rem; font-weight: 400;
     }}
 
-    /* ── Action buttons ──
-       flex-direction: column so they ALWAYS stack vertically.
-       Both buttons are width:100% so they fill the card and
-       can never be wider than their parent — no overflow possible.
-    ── */
+    /* ── Action buttons ── */
     .cert-actions {{
       display: flex;
       flex-direction: column;
@@ -556,10 +809,6 @@ def generate_html(certs, version, build_time):
     }}
     footer a {{ color: var(--accent2); text-decoration: none; }}
 
-    /* ── Mobile fine-tuning (≤480px = all iPhones portrait) ──
-       Buttons are already full-width stacked above — this just
-       tightens spacing and type scale for small screens.
-    ── */
     @media (max-width: 480px) {{
       .hero {{ padding: 2.2rem 0 1.8rem; }}
       .logo {{ width: 64px; height: 64px; font-size: 1.9rem; border-radius: 18px; }}
@@ -677,6 +926,9 @@ def main():
     for idx, item in enumerate(signed_items):
         folder     = item["folder"]
         signed_ipa = item["signed_ipa"]
+        p12_path   = item.get("p12_path", "")
+        mp_path    = item.get("mp_path",  "")
+        password   = item.get("password", "")  # not in signed_manifest — may be absent
         slug       = sanitize_slug(folder)
 
         if not os.path.exists(signed_ipa):
@@ -697,19 +949,31 @@ def main():
         plist_url  = f"{BASE_URL}/{plist_name}"
 
         # ── Plist MUST mirror the patched Info.plist exactly ───────────────
-        # bundle_cert.py wrote unique CFBundleIdentifier + CFBundleVersion
-        # into each IPA's Info.plist. The OTA manifest plist MUST use the
-        # same values — if they differ iOS rejects the install outright.
-        # Fall back to safe computed values for older manifests.
         plist_bundle_id = item.get("bundle_id",     f"{BUNDLE_ID}.{slug}")
         plist_version   = item.get("bundle_version", f"1.0.{idx}")
         plist_title     = f"{APP_NAME} — {folder}"
 
         plist_content = generate_plist(ipa_url, plist_title, plist_bundle_id, plist_version)
-        plist_path    = os.path.join(DEPLOY_DIR, plist_name)
-        with open(plist_path, "w") as f:
+        plist_path_out = os.path.join(DEPLOY_DIR, plist_name)
+        with open(plist_path_out, "w") as f:
             f.write(plist_content)
         print(f"  ✓ {plist_name}  id='{plist_bundle_id}'  version='{plist_version}'")
+
+        # ── Expiry info ────────────────────────────────────────────────────
+        exp = {}
+        if p12_path and mp_path and os.path.exists(p12_path) and os.path.exists(mp_path):
+            print(f"  Extracting expiry dates…")
+            # password may not be carried through signed_manifest; fall back to reading
+            # the cert_password.txt written by fetch_cert.py / bundle_cert.py if absent
+            if not password:
+                pw_file = os.path.join(BUILD_DIR, "cert_password.txt")
+                if os.path.exists(pw_file):
+                    password = open(pw_file).read().strip()
+            exp = expiry_info(p12_path, mp_path, password)
+            print(f"    P12 expires : {exp['p12_expiry']} ({exp['p12_days']}d)")
+            print(f"    MP  expires : {exp['mp_expiry']} ({exp['mp_days']}d)")
+        else:
+            print(f"  [WARN] Cert paths missing/not found for '{folder}' — skipping expiry check.")
 
         certs_meta.append({
             "folder":    folder,
@@ -717,6 +981,7 @@ def main():
             "plist_url": plist_url,
             "sha256":    ipa_sha,
             "size_mb":   ipa_size_mb,
+            "expiry":    exp,
         })
 
     if not certs_meta:
@@ -741,9 +1006,12 @@ def main():
 
     print(f"\n✅ Deploy assets ready in {DEPLOY_DIR} ({len(certs_meta)} cert(s))")
     for c in certs_meta:
+        exp = c.get("expiry", {})
         print(f"  • {c['folder']}")
-        print(f"      IPA : {c['ipa_url']}")
-        print(f"      OTA : itms-services://?action=download-manifest&url={quote(c['plist_url'], safe='')}")
+        print(f"      IPA      : {c['ipa_url']}")
+        print(f"      OTA      : itms-services://?action=download-manifest&url={quote(c['plist_url'], safe='')}")
+        print(f"      P12 exp  : {exp.get('p12_expiry','?')} ({exp.get('p12_days','?')}d remaining)")
+        print(f"      MP  exp  : {exp.get('mp_expiry','?')} ({exp.get('mp_days','?')}d remaining)")
 
 
 if __name__ == "__main__":
