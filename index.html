@@ -138,7 +138,7 @@
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       text-decoration: none;
-      padding: .4rem 1rem;
+      padding: .4rem .75rem;
       border-radius: 8px;
       font-size: .85rem;
       font-weight: 600;
@@ -175,6 +175,11 @@
 
     @media (max-width: 500px) {
       .bundle-id { display: none; }
+      .cert-table { table-layout: fixed; width: 100%; }
+      .cert-name  { width: 45%; word-break: break-word; }
+      .expiry-badge { font-size: .7rem; padding: .2rem .4rem; }
+      .install-btn  { padding: .35rem .55rem; font-size: .8rem; }
+      .app-card { padding: 1rem; }
     }
   </style>
 </head>
@@ -195,7 +200,7 @@
       <section class="app-card" id="ksign">
         <div class="app-header">
           <h2 class="app-title">ksign</h2>
-          <span class="app-version">vv1.5.1</span>
+          <span class="app-version">v1.5.1</span>
         </div>
         <p class="app-subtitle">Choose a certificate to install with:</p>
         <table class="cert-table">
@@ -677,7 +682,7 @@
       </section>
 
   <footer>
-    Auto-deployed from <code>nikos-projects/ipa-distributor</code> · 2026-05-13 19:12 UTC
+    Auto-deployed from <code>nikos-projects/ipa-distributor</code> · 2026-05-13 19:32 UTC
   </footer>
 </body>
 </html>
