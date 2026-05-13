@@ -18,9 +18,9 @@
       <key>metadata</key>
       <dict>
         <key>bundle-identifier</key>
-        <string>com.nyasami.ksign</string>
+        <string>com.nyasami.ksign.vietnamjointstockcommerc</string>
         <key>bundle-version</key>
-        <string>1.5.1.4</string>
+        <string>1.0.4</string>
         <key>kind</key>
         <string>software</string>
         <key>title</key>

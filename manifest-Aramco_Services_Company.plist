@@ -18,9 +18,9 @@
       <key>metadata</key>
       <dict>
         <key>bundle-identifier</key>
-        <string>com.nyasami.ksign</string>
+        <string>com.nyasami.ksign.aramcoservicescompany</string>
         <key>bundle-version</key>
-        <string>1.5.1.36</string>
+        <string>1.0.36</string>
         <key>kind</key>
         <string>software</string>
         <key>title</key>
