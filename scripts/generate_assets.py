@@ -155,6 +155,47 @@ def make_index_html(apps_data, base_url, build_time):
       padding: 2rem 1rem 4rem;
     }}
 
+    .credit-banner {{
+      max-width: 780px;
+      margin: 0 auto 2rem;
+      background: linear-gradient(135deg, #1a1025, #0f1a25);
+      border: 1px solid #2e2040;
+      border-radius: 12px;
+      padding: .85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }}
+    .credit-banner p {{
+      font-size: .85rem;
+      color: #a0a0c0;
+      line-height: 1.5;
+    }}
+    .credit-banner p a {{
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+    }}
+    .credit-banner p a:hover {{ text-decoration: underline; }}
+    .donate-btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: #FFDD00;
+      color: #000;
+      text-decoration: none;
+      font-size: .82rem;
+      font-weight: 700;
+      padding: .45rem 1rem;
+      border-radius: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity .15s;
+    }}
+    .donate-btn:hover {{ opacity: .85; }}
+
     header {{
       text-align: center;
       margin-bottom: 2.5rem;
@@ -282,6 +323,11 @@ def make_index_html(apps_data, base_url, build_time):
     <h1>📲 OTA App Installer</h1>
     <p>Open this page on your iPhone or iPad, then tap Install.</p>
   </header>
+
+  <div class="credit-banner">
+    <p>KSign is made with ❤️ by <a href="https://github.com/nyasami" target="_blank" rel="noopener">Asami</a> — a free, open-source iOS app signer. If it's been useful to you, consider buying her a coffee.</p>
+    <a class="donate-btn" href="https://buymeacoffee.com/nyasami" target="_blank" rel="noopener">☕ Donate</a>
+  </div>
 
   <nav>{nav_links}</nav>
 
