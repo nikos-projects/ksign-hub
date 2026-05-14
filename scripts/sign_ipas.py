@@ -78,17 +78,19 @@ def main():
         print(f"  ✅ Signed: {size:,} bytes → {output}")
 
         signed_entries.append({
-            "app_name":       app_name,
-            "app_version":    entry.get("app_version", "unknown"),
-            "folder":         folder,
-            "signed_ipa":     output,
-            "p12_path":       p12,
-            "mp_path":        mp,
-            "bundle_id":      entry.get("bundle_id",      ""),
-            "bundle_version": entry.get("bundle_version", ""),
-            "cert_expiry":    entry.get("cert_expiry",    "unknown"),
-            "cert_days_left": entry.get("cert_days_left", None),
-            "comment":        entry.get("comment",        ""),
+            "app_name":           app_name,
+            "app_version":        entry.get("app_version", "unknown"),
+            "folder":             folder,
+            "signed_ipa":         output,
+            "p12_path":           p12,
+            "mp_path":            mp,
+            "bundle_id":          entry.get("bundle_id",           ""),
+            "original_bundle_id": entry.get("original_bundle_id",  ""),
+            "bundle_version":     entry.get("bundle_version",      ""),
+            "cert_expiry":        entry.get("cert_expiry",         "unknown"),
+            "cert_days_left":     entry.get("cert_days_left",      None),
+            "comment":            entry.get("comment",             ""),
+            "display_name":       entry.get("display_name",        ""),
         })
 
     if not signed_entries:
