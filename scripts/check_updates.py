@@ -213,8 +213,6 @@ def resolve_entry(entry):
     return get_latest_ipa_for_repo(entry)
 
 
-
-
 def main():
     print(f"Checking cert repo : {CERT_REPO}")
 
@@ -247,6 +245,8 @@ def main():
         # Direct URLs have no trackable version — cert change alone triggers rebuild
         if version == "direct":
             print(f"  Direct URL — version tracking skipped, cert change triggers rebuild")
+            # For direct URLs, we always consider them "changed" when cert changes
+            # No version tracking needed
         else:
             last_version = read_state(f"last_ipa_version_{app_name}")
             print(f"  Cached version   : {last_version}")
