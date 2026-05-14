@@ -130,10 +130,21 @@ jobs:
       - name: Sign all IPAs
         run: python scripts/sign_ipas.py
 
+      # ── 5.5 Get GitHub Pages URL ─────────────────────────────────────────────
+      - name: Get GitHub Pages URL
+        id: pages_url
+        run: |
+          if [ -n "${{ github.event.repository.homepage }}" ]; then
+            echo "url=${{ github.event.repository.homepage }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+          fi
+
       # ── 6. Generate manifest.plist(s) & index.html ───────────────────────────
       - name: Generate deployment assets
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PAGES_URL: ${{ steps.pages_url.outputs.url }}
         run: python scripts/generate_assets.py
 
       # ── 7. Deploy to gh-pages ─────────────────────────────────────────────────
