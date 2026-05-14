@@ -136,11 +136,12 @@ def main():
             f.write(version)
 
         downloaded_apps.append({
-            "app_name":   app_name,
-            "version":    version,
-            "ipa_path":   dest,
-            "repo":       app.get("repo", ""),
-            "comment":    app.get("comment", ""),
+            "app_name":    app_name,
+            "version":     version,
+            "ipa_path":    dest,
+            "repo":        app.get("repo", ""),
+            "comment":     app.get("comment", ""),
+            "display_name": app.get("display_name", ""),
         })
 
     if not downloaded_apps:
