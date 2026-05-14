@@ -247,13 +247,27 @@ def main():
 
             print(f"\n  [{n}/{total}] Cert: {folder}")
 
-            # Unique bundle-id: <base>.<appslug>.<certslug>
-            # e.g. com.nyasami.ksign.playbox.globaltakeoff
             app_slug  = safe_slug(app_name)
             cert_slug = safe_slug(folder)
-            unique_bundle_id = f"{BASE_BUNDLE_ID}.{app_slug}.{cert_slug}"
 
-            # Unique version: <app_index>.<cert_index>
+            # Read the real bundle ID from the IPA's Info.plist BEFORE we patch it
+            original_bundle_id = BASE_BUNDLE_ID  # fallback
+            try:
+                with zipfile.ZipFile(input_ipa, "r") as zf:
+                    plist_candidates = [
+                        n for n in zf.namelist()
+                        if n.endswith(".app/Info.plist") and n.startswith("Payload/")
+                    ]
+                    if plist_candidates:
+                        with zf.open(plist_candidates[0]) as pf:
+                            pdata = plistlib.load(pf)
+                            original_bundle_id = pdata.get("CFBundleIdentifier", BASE_BUNDLE_ID)
+                            print(f"  ✓ Original bundle ID: {original_bundle_id}")
+            except Exception as e:
+                print(f"  [WARN] Could not read original bundle ID: {e}")
+
+            # Unique patched ID: needed so iOS treats each cert variant as a distinct app
+            unique_bundle_id      = f"{original_bundle_id}.{cert_slug}"
             unique_bundle_version = f"1.{apps.index(app)}.{i}"
 
             # Extract expiry from .p12 before bundling
@@ -272,18 +286,20 @@ def main():
                     unique_bundle_version,
                 )
                 output_manifest.append({
-                    "app_name":       app_name,
-                    "app_version":    version,
-                    "folder":         folder,
-                    "p12_path":       p12_path,
-                    "mp_path":        mp_path,
-                    "password":       password,
-                    "bundled_ipa":    output_ipa,
-                    "bundle_id":      unique_bundle_id,
-                    "bundle_version": unique_bundle_version,
-                    "cert_expiry":    expiry_str,
-                    "cert_days_left": days_left,
-                    "comment":        app.get("comment", ""),
+                    "app_name":          app_name,
+                    "app_version":       version,
+                    "folder":            folder,
+                    "p12_path":          p12_path,
+                    "mp_path":           mp_path,
+                    "password":          password,
+                    "bundled_ipa":       output_ipa,
+                    "bundle_id":         unique_bundle_id,       # used in manifest.plist
+                    "original_bundle_id": original_bundle_id,    # displayed on website
+                    "bundle_version":    unique_bundle_version,
+                    "cert_expiry":       expiry_str,
+                    "cert_days_left":    days_left,
+                    "comment":           app.get("comment", ""),
+                    "display_name":      app.get("display_name", ""),
                 })
             except Exception as e:
                 print(f"  [ERROR] Failed to bundle '{app_name}' × '{folder}': {e}")
