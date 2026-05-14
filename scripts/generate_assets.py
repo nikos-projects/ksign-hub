@@ -77,9 +77,10 @@ def make_index_html(apps_data, base_url, build_time):
     def app_cards():
         parts = []
         for app_name in sorted(apps_data.keys()):
-            entries    = apps_data[app_name]
+            entries     = apps_data[app_name]
             app_version = entries[0]["app_version"] if entries else "?"
-            app_slug   = slug(app_name)
+            app_comment = entries[0].get("comment", "")
+            app_slug    = slug(app_name)
 
             cert_rows = ""
             for e in sorted(entries, key=lambda x: x["cert_folder"]):
@@ -112,12 +113,14 @@ def make_index_html(apps_data, base_url, build_time):
             <td class="bundle-id">{e['bundle_id']}</td>
           </tr>"""
 
+            comment_html = f'\n        <p class="app-comment">{app_comment}</p>' if app_comment else ""
+
             parts.append(f"""
       <section class="app-card" id="{app_slug}">
         <div class="app-header">
           <h2 class="app-title">{app_name}</h2>
           <span class="app-version">{app_version if app_version.startswith("v") else "v" + app_version}</span>
-        </div>
+        </div>{comment_html}
         <p class="app-subtitle">Choose a certificate to install with:</p>
         <table class="cert-table">
           <thead>
@@ -248,6 +251,13 @@ def make_index_html(apps_data, base_url, build_time):
       color: #7c7c99;
       font-size: .85rem;
       margin-bottom: 1rem;
+    }}
+    .app-comment {{
+      color: #9090b0;
+      font-size: .85rem;
+      font-style: italic;
+      margin: .25rem 0 .75rem;
+      line-height: 1.5;
     }}
 
     .cert-table {{
@@ -707,13 +717,14 @@ def main():
         print(f"  Wrote: {plist_path}")
 
         apps_data[app_name].append({
-            "cert_folder":   cert_folder,
-            "cert_slug":     cert_slug,
-            "app_version":   app_version,
-            "manifest_url":  manifest_url,
-            "bundle_id":     bundle_id,
-            "cert_expiry":   entry.get("cert_expiry",    "unknown"),
+            "cert_folder":    cert_folder,
+            "cert_slug":      cert_slug,
+            "app_version":    app_version,
+            "manifest_url":   manifest_url,
+            "bundle_id":      bundle_id,
+            "cert_expiry":    entry.get("cert_expiry",    "unknown"),
             "cert_days_left": entry.get("cert_days_left", None),
+            "comment":        entry.get("comment",        ""),
         })
 
     build_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
