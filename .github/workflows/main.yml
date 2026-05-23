@@ -1,5 +1,8 @@
 name: Auto-Sign & Deploy IPA
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 on:
   schedule:
     # Runs every 6 hours — adjust as needed
