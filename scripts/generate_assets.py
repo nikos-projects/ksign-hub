@@ -95,14 +95,18 @@ def make_index_html(apps_data, base_url, build_time):
             app_slug     = slug(app_name)
 
             cert_rows = ""
+            best = max(entries, key=lambda x: x.get("cert_days_left") or -1)
             for e in sorted(entries, key=lambda x: x["cert_folder"]):
                 install_url = f"itms-services://?action=download-manifest&url={{e['manifest_url']}}".replace("{e['manifest_url']}", e['manifest_url'])
                 days   = e.get("cert_days_left")
                 expiry = e.get("cert_expiry", "unknown")
                 badge_cls, badge_text = _badge(days, expiry)
+                is_recommended = e is best and (days or 0) > 0
+                recommended_html = ' <span class="recommended-badge">Recommended</span>' if is_recommended else ""
+                row_class = ' class="best-cert-row"' if is_recommended else ""
                 cert_rows += f"""
-            <tr>
-              <td class="cert-name">{e['cert_folder']}</td>
+            <tr{row_class}>
+              <td class="cert-name">{e['cert_folder']}{recommended_html}</td>
               <td><span class="expiry-badge {badge_cls}" title="Expires {expiry}">{badge_text}</span></td>
               <td><a class="install-btn" href="{install_url}">⬇ Install</a></td>
               <td class="bundle-id">{e.get('bundle_id', '')}</td>
