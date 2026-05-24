@@ -1,4 +1,3 @@
 nyasami/ksign //the best signer out there - comes pre loaded with a cert
 nikos-projects/playbox //my own app
-https://files.catbox.moe/z6n5sw.ipa //name=ESign, the worst signer app out there. Doesnt come pre loaded with a cert because its a trash app, dont use it, i put it here if you have the .p12
-opa334/Dopamine //a jailbreak made for devices running iOS 16< (semi-untethered)
+opa334/Dopamine //a jailbreak made for devices running iOS 18< (semi-untethered), please manually check compatibility before downloading
