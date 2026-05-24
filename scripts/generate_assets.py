@@ -152,7 +152,7 @@ def make_index_html(apps_data, base_url, build_time):
         f'<a href="#{slug(a)}">{apps_data[a][0].get("display_name", "") or a}</a>'
         for a in sorted(apps_data.keys())
     )
-    nav_items += '<a href="dns-instructions/">🛡 DNS</a>'
+    nav_items += '<a href="https://novadev.vip/resources/dns/novadns.mobileconfig">🛡 NovaDNS</a>'
 
     app_ids_js = ", ".join(
         f'"{slug(a)}"' for a in sorted(apps_data.keys())
@@ -680,7 +680,6 @@ def make_index_html(apps_data, base_url, build_time):
 
   <footer>
     Auto-deployed from <code>{GITHUB_REPOSITORY}</code> · {build_time}
-    · <a href="dns-instructions/">DNS Guide</a>
     · <a href="https://github.com/{GITHUB_REPOSITORY}" target="_blank" rel="noopener">Source</a>
     <br /><span style="font-size:.7rem;color:#555;margin-top:.3rem;display:inline-block;">UI by <a href="https://github.com/newbbd/ipa-distributor" target="_blank" rel="noopener" style="color:#666;">newbbd</a></span>
   </footer>
@@ -1375,13 +1374,6 @@ def main():
     with open(index_path, "w") as f:
         f.write(html)
     print(f"\n✅ index.html written with {len(apps_data)} app(s).")
-
-    dns_dir  = os.path.join(DEPLOY_DIR, "dns-instructions")
-    os.makedirs(dns_dir, exist_ok=True)
-    dns_path = os.path.join(dns_dir, "index.html")
-    with open(dns_path, "w") as f:
-        f.write(make_dns_html(base_url, build_time))
-    print(f"✅ dns-instructions/index.html written.")
 
     print(f"\nDeploy tree summary:")
     for app_name, entries in sorted(apps_data.items()):
