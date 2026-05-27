@@ -5,7 +5,7 @@ to khoindvn.io.vn
 
 ## What can it do? 
 
-It can.. 
+It can...
 1. install apps over the air :O
 2. Automatically fetch the newest certs from the novadev repo
 3. automatically fetch apps and their newevt version
